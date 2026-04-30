@@ -13,10 +13,16 @@ Never lose your brush size, opacity, flow, blending mode, or colors when switchi
 - **No polling** — uses Krita’s native layer selection signals for smooth performance.
 - **Persistent storage** — saves brush data inside the `.kra` document using annotations (no external files).
 - **UI integration**:
-  - Toggle button in the layer docker toolbar
+
+
+  **- Toggle button in the layer docker toolbar**
+    
   <img width="368" height="429" alt="grafik" src="https://github.com/user-attachments/assets/e73aadef-3d47-47f2-a7ff-aa50078c42c6" />
 
-  - Entry in the Layer menu
+
+
+  **- Entry in the Layer menu**
+    
   <img width="521" height="463" alt="grafik" src="https://github.com/user-attachments/assets/f61c726b-a7fd-45ca-99f2-371082ba2b9d" />
 
 - Works with multiple documents and survives save/reopen.
