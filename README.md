@@ -39,14 +39,17 @@ Never lose your brush size, opacity, flow, blending mode, or colors when switchi
 
 - The plugin activates automatically when you switch layers.
 - Excluded layers show the **gray/off** icon.
+- The default Mode is always on for each new Layer ! if you default off youhave to chage line 26 
+  DEFAULT_REMEMBERED = True   # False = opt-in 
+  from True to False !!!  
 
-Your brush state is saved **inside the document**, so it travels with the `.kra` file.
+Your brush state is saved **inside the document** into document annotations, so it will always work. 
 
 ---
 
 ## Requirements
 
-- **Krita 5.0** or newer
+- **Krita 5.0** or newer (tested only on 5.3)
 - Python 3 (included with Krita)
 
 ---
