@@ -23,18 +23,6 @@ Never lose your brush size, opacity, flow, blending mode, or colors when switchi
 
 ---
 
-## Installation
-
-1. Download the latest release or clone this repository.
-2. Copy the entire `layer_brush_memory` folder into your Krita plugins directory:
-   - **Windows**: `C:\Users\YourName\AppData\Roaming\krita\pykrita`
-   - **Linux**: `~/.local/share/krita/pykrita`
-   - **macOS**: `~/Library/Application Support/Krita/pykrita`
-3. Restart **Krita**.
-4. Go to **Settings → Configure Krita → Python Plugin Manager** and **enable** "Layer Brush Memory".
-
----
-
 ## How to Use
 
 - The plugin activates automatically when you switch layers.
