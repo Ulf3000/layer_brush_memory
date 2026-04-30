@@ -1,0 +1,7 @@
+[Desktop Entry]
+Type=Service
+ServiceTypes=Krita/PythonPlugin
+X-KDE-Library=layer_brush_memory
+X-Krita-Version=29
+Name=Layer Brush Memory
+Comment=Remembers and restores the last brush preset used on each layer
