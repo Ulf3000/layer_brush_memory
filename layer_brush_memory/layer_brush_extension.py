@@ -25,6 +25,10 @@ _PLUGIN_DIR = os.path.dirname(__file__)
 
 DEFAULT_REMEMBERED = True   # False = opt-in
 
+# Node types that participate in brush memory.
+# Add more type strings here to extend coverage.
+_ELIGIBLE_TYPES = {'paintlayer', 'transparencymask', 'selectionmask', 'filtermask'}
+
 
 # ---------------------------------------------------------------------------
 # Icons
@@ -88,6 +92,13 @@ def _uid(node):
         return node.uniqueId().toString(False)
     except Exception:
         return None
+
+def _is_eligible(node):
+    """Return True only for node types that participate in brush memory."""
+    try:
+        return node.type() in _ELIGIBLE_TYPES
+    except Exception:
+        return False
 
 
 # ---------------------------------------------------------------------------
@@ -154,9 +165,10 @@ class _Handler(QObject):
         # In-memory excluded set: uid strings
         self._excluded: set[str] = set()
 
-        # uid of the layer that was active when currentChanged fired
-        # We capture it immediately (while the old node is still safe)
+        # uid and eligibility of the layer that was active when currentChanged fired.
+        # Captured immediately while the old node is still safe.
         self._prev_uid: str | None = None
+        self._prev_eligible: bool = False
 
         try:
             n = _app.notifier()
@@ -183,7 +195,8 @@ class _Handler(QObject):
         # Seed prev_uid with whatever is active now
         n = _node()
         if n:
-            self._prev_uid = _uid(n)
+            self._prev_uid      = _uid(n)
+            self._prev_eligible = _is_eligible(n)
 
     # -----------------------------------------------------------------------
     # Persistence — write/read full memory dict to document annotation
@@ -238,7 +251,8 @@ class _Handler(QObject):
         # Step 1: save current brush to the PREVIOUS layer (still safe — view
         # hasn't changed yet, only the index moved)
         v = _view()
-        if v and self._prev_uid and self._prev_uid not in self._excluded:
+        if v and self._prev_uid and self._prev_eligible \
+                and self._prev_uid not in self._excluded:
             data = _capture(v)
             if data:
                 self._brushes[self._prev_uid] = data
@@ -256,10 +270,11 @@ class _Handler(QObject):
         if uid is None:
             return
 
-        # Remember this uid as "previous" for the next switch
-        self._prev_uid = uid
+        # Remember this uid and eligibility as "previous" for the next switch
+        self._prev_uid      = uid
+        self._prev_eligible = _is_eligible(n)
 
-        if uid not in self._excluded:
+        if self._prev_eligible and uid not in self._excluded:
             data = self._brushes.get(uid)
             if data:
                 _restore(v, data)
@@ -290,12 +305,16 @@ class _Handler(QObject):
     def _refresh_ui(self):
         n = _node()
         uid = _uid(n) if n else None
-        remembered = (uid not in self._excluded) if uid else DEFAULT_REMEMBERED
+        eligible   = _is_eligible(n) if n else False
+        remembered = eligible and ((uid not in self._excluded) if uid else DEFAULT_REMEMBERED)
         try: self._menu_action.setChecked(remembered)
+        except Exception: pass
+        try: self._menu_action.setEnabled(eligible)
         except Exception: pass
         for btn in (self._opacity_btn, self._toolbar_btn):
             try:
                 if btn:
+                    btn.setEnabled(eligible)
                     btn.setChecked(remembered)
                     btn.setIcon(_icon(remembered))
             except Exception: pass
