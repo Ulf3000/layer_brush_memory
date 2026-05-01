@@ -12,6 +12,8 @@ Never lose your brush size, opacity, flow, blending mode, or colors when switchi
 - **Per-layer toggle** — exclude specific layers from brush memory (great for adjustment layers, reference layers, etc.).
 - **No polling** — uses Krita’s native layer selection signals for smooth performance.
 - **Persistent storage** — saves brush data inside the `.kra` document using annotations (no external files).
+- **Works with multiple documents and survives save/reopen.**
+
 - **UI integration**:
 
 
@@ -25,7 +27,7 @@ Never lose your brush size, opacity, flow, blending mode, or colors when switchi
     
   <img width="521" height="463" alt="grafik" src="https://github.com/user-attachments/assets/f61c726b-a7fd-45ca-99f2-371082ba2b9d" />
 
-- Works with multiple documents and survives save/reopen.
+
 
 ---
 
