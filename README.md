@@ -9,7 +9,7 @@ Never lose your brush size, opacity, flow, blending mode, or colors when switchi
 ## Features
 
 - **Automatic per-layer brush memory** — instantly restores brush preset, size, opacity, flow, blending mode, and foreground/background colors when you switch layers.
-- **Per-layer toggle** — exclude specific layers from brush memory (great for adjustment layers, reference layers, etc.).
+- **Per-layer toggle** — exclude specific layers from brush memory.
 - **No polling** — uses Krita’s native layer selection signals for smooth performance.
 - **Persistent storage** — saves brush data inside the `.kra` document using annotations (no external files).
 - **Works with multiple documents and survives save/reopen.** 
