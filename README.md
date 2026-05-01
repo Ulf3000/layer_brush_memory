@@ -36,20 +36,20 @@ Never lose your brush size, opacity, flow, blending mode, or colors when switchi
 - The plugin activates automatically when you switch layers.
 - Excluded layers show the **gray/off** icon.
 
-  The default Mode is **always on**  for every new Pixel-Layer! 
 
 
-if you want **default off** youhave to chage line 26 in the script: 
-  
-* DEFAULT_REMEMBERED = True   to  DEFAULT_REMEMBERED = False *
----
+## Options
+The default Mode is **always on**  for every new Pixel-Layer! 
+if you want **default off** youhave to chage line 26 in the script:
+
+DEFAULT_REMEMBERED = True 
+to 
+DEFAULT_REMEMBERED = False
 
 ## Requirements
 
 - **Krita 5.0** or newer (tested only on 5.3)
-- Python 3 (included with Krita)
 
----
 
 ## Version History
 
