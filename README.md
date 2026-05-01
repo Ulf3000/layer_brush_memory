@@ -12,7 +12,7 @@ Never lose your brush size, opacity, flow, blending mode, or colors when switchi
 - **Per-layer toggle** — exclude specific layers from brush memory (great for adjustment layers, reference layers, etc.).
 - **No polling** — uses Krita’s native layer selection signals for smooth performance.
 - **Persistent storage** — saves brush data inside the `.kra` document using annotations (no external files).
-- **Works with multiple documents and survives save/reopen.**
+- **Works with multiple documents and survives save/reopen.** 
 
 - **UI integration**:
 
@@ -36,12 +36,12 @@ Never lose your brush size, opacity, flow, blending mode, or colors when switchi
 - The plugin activates automatically when you switch layers.
 - Excluded layers show the **gray/off** icon.
 
-- **The default Mode is always on for each new Layer ! if you default off youhave to chage line 26 
-  DEFAULT_REMEMBERED = True   # False = opt-in 
-  from True to False !!!  **
+  The default Mode is **always on**  for every new Pixel-Layer! 
 
-Your brush state is saved **inside the document** into document annotations, so it will always work. 
 
+if you want **default off** youhave to chage line 26 in the script: 
+  
+DEFAULT_REMEMBERED = True   to  DEFAULT_REMEMBERED = False
 ---
 
 ## Requirements
