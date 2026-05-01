@@ -41,7 +41,7 @@ Never lose your brush size, opacity, flow, blending mode, or colors when switchi
 
 if you want **default off** youhave to chage line 26 in the script: 
   
-DEFAULT_REMEMBERED = True   to  DEFAULT_REMEMBERED = False
+* DEFAULT_REMEMBERED = True   to  DEFAULT_REMEMBERED = False *
 ---
 
 ## Requirements
