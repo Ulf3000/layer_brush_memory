@@ -1,6 +1,6 @@
 # Layer Brush Memory for Krita
 
-A lightweight Krita plugin that **remembers your brush settings per layer**.
+A lightweight Krita plugin that **remembers your brush settings per layer**. EDIT: it now also remembers other tools like vector text selection and so on
 
 Never lose your brush size, opacity, flow, blending mode, or colors when switching between layers again.
 
@@ -9,6 +9,7 @@ Never lose your brush size, opacity, flow, blending mode, or colors when switchi
 ## Features
 
 - **Automatic per-layer brush memory** — instantly restores brush preset, size, opacity, flow, blending mode, and foreground/background colors when you switch layers.
+- **Automatic per layer tool memory** - it now restores your other tools too
 - **Per-layer toggle** — exclude specific layers from brush memory.
 - **No polling** — uses Krita’s native layer selection signals for smooth performance.
 - **Persistent storage** — saves brush data inside the `.kra` document using annotations (no external files).
