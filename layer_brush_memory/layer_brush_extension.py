@@ -1,8 +1,15 @@
 """
-layer_brush_memory — stores brush state in a plain Python dict.
+layer_brush_memory — stores brush + tool state in a plain Python dict.
 No polling. No node writes. No annotation writes.
-On layer switch: save current brush to the OLD node's UUID, restore from NEW node's UUID.
+On layer switch: save current brush/tool to the OLD node's UUID, restore from NEW node's UUID.
 UUID is read once while the node is known-safe (at selection time).
+
+Tool memory:
+  - All layer types are eligible (paint, vector, group, mask, …).
+  - The active tool ID is captured and restored along with brush state.
+  - Vector layers default to 'KritaShape/KisToolText' on first visit if no
+    entry exists yet; other layer types default to whatever is active.
+  - _DEFAULT_TOOL_BY_TYPE maps node type strings to fallback tool IDs.
 """
 
 import json
@@ -16,6 +23,7 @@ from PyQt5.QtSvg     import QSvgRenderer
 from PyQt5.QtWidgets import (
     QApplication, QMenu, QAction,
     QToolButton, QDoubleSpinBox, QTreeView,
+    QButtonGroup,
 )
 
 from .layer_brush_plugin import PLUGIN_NAME
@@ -25,9 +33,22 @@ _PLUGIN_DIR = os.path.dirname(__file__)
 
 DEFAULT_REMEMBERED = True   # False = opt-in
 
-# Node types that participate in brush memory.
-# Add more type strings here to extend coverage.
-_ELIGIBLE_TYPES = {'paintlayer', 'transparencymask', 'selectionmask', 'filtermask'}
+# All node types participate in tool+brush memory.
+# The sentinel value None means "all types".
+_ELIGIBLE_TYPES = None  # None → every type is eligible
+
+# Default tool to activate on FIRST visit to a layer of that type.
+# Key: node.type() string.  Value: Krita action/tool ID.
+# Leave a type out to inherit whatever tool was active (no switch).
+_DEFAULT_TOOL_BY_TYPE: dict[str, str] = {
+    'vectorlayer':      'KritaShape/KisToolText',
+    'paintlayer':       'KritaShape/KisToolBrush',
+    'transparencymask': 'KritaShape/KisToolBrush',
+    'selectionmask':    'KritaShape/KisToolBrush',
+    'filtermask':       'KritaShape/KisToolBrush',
+    'grouplayer':       'KritaShape/KisToolTransform',
+    'clonelayer':       'KritaShape/KisToolTransform',
+}
 
 
 # ---------------------------------------------------------------------------
@@ -94,34 +115,88 @@ def _uid(node):
         return None
 
 def _is_eligible(node):
-    """Return True only for node types that participate in brush memory."""
+    """Return True for all node types when _ELIGIBLE_TYPES is None, else check set."""
     try:
+        if _ELIGIBLE_TYPES is None:
+            return True
         return node.type() in _ELIGIBLE_TYPES
     except Exception:
         return False
+
+def _toolbox_button_group():
+    """Return the ToolBox docker's QButtonGroup, or None."""
+    try:
+        dock = next((w for w in _app.dockers() if w.objectName() == 'ToolBox'), None)
+        if dock is None:
+            return None
+        return dock.findChild(QButtonGroup)
+    except Exception:
+        return None
+
+
+# ---------------------------------------------------------------------------
+# Tool capture / restore
+# ---------------------------------------------------------------------------
+
+def _capture_tool() -> str | None:
+    """Return the objectName of the currently checked tool button, or None."""
+    try:
+        bg = _toolbox_button_group()
+        if bg is None:
+            return None
+        btn = bg.checkedButton()
+        return btn.objectName() if btn else None
+    except Exception:
+        return None
+
+def _restore_tool(tool_id: str) -> None:
+    """Click the tool button with the given objectName."""
+    try:
+        bg = _toolbox_button_group()
+        if bg is None:
+            return
+        for btn in bg.buttons():
+            if btn.objectName() == tool_id:
+                btn.click()
+                return
+    except Exception:
+        pass
 
 
 # ---------------------------------------------------------------------------
 # Brush capture / restore
 # ---------------------------------------------------------------------------
 
-def _capture(view):
+_BRUSH_ELIGIBLE_TYPES = {'paintlayer', 'transparencymask', 'selectionmask', 'filtermask'}
+
+def _capture(view, node=None):
     try:
-        preset = view.currentBrushPreset()
-        if preset is None: return None
-        return {
-            'n':  preset.name(),
-            's':  view.brushSize(),
-            'o':  view.paintingOpacity(),
-            'f':  view.paintingFlow(),
-            'b':  view.currentBlendingMode(),
-            'fg': list(view.foregroundColor().components()),
-            'bg': list(view.backgroundColor().components()),
-        }
+        tool_id = _capture_tool()
+        entry: dict = {'tool': tool_id} if tool_id else {}
+        # Only capture brush state for paint-capable layers
+        brush_eligible = node is None or (node.type() in _BRUSH_ELIGIBLE_TYPES)
+        if brush_eligible:
+            preset = view.currentBrushPreset()
+            if preset is not None:
+                entry.update({
+                    'n':  preset.name(),
+                    's':  view.brushSize(),
+                    'o':  view.paintingOpacity(),
+                    'f':  view.paintingFlow(),
+                    'b':  view.currentBlendingMode(),
+                    'fg': list(view.foregroundColor().components()),
+                    'bg': list(view.backgroundColor().components()),
+                })
+        return entry if entry else None
     except Exception:
         return None
 
 def _restore(view, data):
+    try:
+        tool = data.get('tool')
+        if tool:
+            _restore_tool(tool)
+    except Exception: pass
     try:
         p = _app.resources('preset').get(data['n'])
         if p: view.setCurrentBrushPreset(p)
@@ -146,10 +221,6 @@ def _restore(view, data):
     except Exception: pass
 
 
-# ---------------------------------------------------------------------------
-# Handler
-# ---------------------------------------------------------------------------
-
 class _Handler(QObject):
 
     def __init__(self, menu_action):
@@ -169,6 +240,7 @@ class _Handler(QObject):
         # Captured immediately while the old node is still safe.
         self._prev_uid: str | None = None
         self._prev_eligible: bool = False
+        self._prev_node_type: str | None = None
 
         try:
             n = _app.notifier()
@@ -195,8 +267,9 @@ class _Handler(QObject):
         # Seed prev_uid with whatever is active now
         n = _node()
         if n:
-            self._prev_uid      = _uid(n)
-            self._prev_eligible = _is_eligible(n)
+            self._prev_uid       = _uid(n)
+            self._prev_eligible  = _is_eligible(n)
+            self._prev_node_type = n.type()
 
     # -----------------------------------------------------------------------
     # Persistence — write/read full memory dict to document annotation
@@ -248,12 +321,17 @@ class _Handler(QObject):
     # -----------------------------------------------------------------------
 
     def _on_current_changed(self, current_index, previous_index):
-        # Step 1: save current brush to the PREVIOUS layer (still safe — view
+        # Step 1: save current brush+tool to the PREVIOUS layer (still safe — view
         # hasn't changed yet, only the index moved)
         v = _view()
         if v and self._prev_uid and self._prev_eligible \
                 and self._prev_uid not in self._excluded:
-            data = _capture(v)
+            # Reconstruct a minimal node proxy just for the type guard
+            class _TypeProxy:
+                def __init__(self, t): self._t = t
+                def type(self): return self._t
+            proxy = _TypeProxy(self._prev_node_type) if self._prev_node_type else None
+            data = _capture(v, proxy)
             if data:
                 self._brushes[self._prev_uid] = data
 
@@ -271,13 +349,19 @@ class _Handler(QObject):
             return
 
         # Remember this uid and eligibility as "previous" for the next switch
-        self._prev_uid      = uid
-        self._prev_eligible = _is_eligible(n)
+        self._prev_uid       = uid
+        self._prev_eligible  = _is_eligible(n)
+        self._prev_node_type = n.type()
 
         if self._prev_eligible and uid not in self._excluded:
             data = self._brushes.get(uid)
             if data:
                 _restore(v, data)
+            else:
+                # First visit: apply default tool for this layer type (if mapped)
+                default_tool = _DEFAULT_TOOL_BY_TYPE.get(n.type())
+                if default_tool:
+                    _restore_tool(default_tool)
 
         self._refresh_ui()
 
@@ -433,7 +517,7 @@ class _Handler(QObject):
         btn = QToolButton(parent)
         btn.setCheckable(True)
         btn.setFixedSize(w, h)
-        btn.setToolTip('Remember brush for this layer (click to exclude)')
+        btn.setToolTip('Remember tool & brush for this layer (click to exclude)')
         btn.setIcon(_icon(DEFAULT_REMEMBERED))
         btn.clicked.connect(lambda: self.do_toggle())
         return btn
@@ -462,7 +546,7 @@ class _CtxFilter(QObject):
             uid = _uid(n)
             remembered = (uid not in self._handler._excluded) if uid else DEFAULT_REMEMBERED
             act = QAction(
-                'Exclude from brush memory' if remembered else 'Remember brush for this layer',
+                'Exclude from tool & brush memory' if remembered else 'Remember tool & brush for this layer',
                 menu)
             act.setIcon(_icon(not remembered))
             act.triggered.connect(self._handler.do_toggle)
@@ -490,7 +574,7 @@ class LayerBrushExtension(Extension):
     def createActions(self, window):
         action = window.createAction(
             f'{PLUGIN_NAME}:toggle',
-            'Remember Brush for this Layer',
+            'Remember Tool & Brush for this Layer',
             'layer')
         action.setCheckable(True)
         action.setChecked(DEFAULT_REMEMBERED)
