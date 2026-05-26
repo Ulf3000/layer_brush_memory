@@ -32,13 +32,6 @@ Two checkable entries under the **Layer** menu:
 
 <img width="352" height="506" alt="image" src="https://github.com/user-attachments/assets/2935a130-6894-4865-9494-ddc2b91ce559" />
 
-### Right-click context menu on any layer
-
-- *Enable / Disable tool memory for this layer*
-- *Enable / Disable brush memory for this layer*
-
----
-
 ## How It Works
 
 When you switch away from a layer the plugin captures:
