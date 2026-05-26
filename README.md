@@ -20,13 +20,13 @@ Never lose your brush size, opacity, flow, blending mode, or colors when switchi
 
   **- Toggle button in the layer docker toolbar**
     
-  <img width="368" height="429" alt="grafik" src="https://github.com/user-attachments/assets/e73aadef-3d47-47f2-a7ff-aa50078c42c6" />
+<img width="385" height="463" alt="image" src="https://github.com/user-attachments/assets/c92278b4-f750-41ae-879f-6dee6e184c60" />
 
 
 
   **- Entry in the Layer menu**
     
-  <img width="521" height="463" alt="grafik" src="https://github.com/user-attachments/assets/f61c726b-a7fd-45ca-99f2-371082ba2b9d" />
+<img width="352" height="506" alt="image" src="https://github.com/user-attachments/assets/2935a130-6894-4865-9494-ddc2b91ce559" />
 
 
 
